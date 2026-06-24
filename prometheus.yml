@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: backend_proxy
+    static_configs:
+      - targets: ["backend_proxy:5123"]
+    metrics_path: /metrics

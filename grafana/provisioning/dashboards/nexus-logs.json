@@ -1,0 +1,317 @@
+{
+  "uid": "nexus-logs",
+  "title": "Nexus — Logs",
+  "tags": ["nexus", "logs"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "custom",
+        "current": { "value": "nexus.*", "text": "All Nexus" },
+        "options": [
+          { "value": "nexus.*",        "text": "All Nexus",    "selected": true },
+          { "value": "nexus-backend",  "text": "backend_proxy","selected": false },
+          { "value": "nexus-mcp",      "text": "mcp_server",   "selected": false }
+        ],
+        "includeAll": false,
+        "hide": 0
+      },
+      {
+        "name": "level",
+        "label": "Level",
+        "type": "custom",
+        "current": { "value": ".*", "text": "All" },
+        "options": [
+          { "value": ".*",                   "text": "All",      "selected": true },
+          { "value": "DEBUG|debug",           "text": "DEBUG",    "selected": false },
+          { "value": "INFO|info",             "text": "INFO",     "selected": false },
+          { "value": "WARNING|warning",       "text": "WARNING",  "selected": false },
+          { "value": "ERROR|error",           "text": "ERROR",    "selected": false },
+          { "value": "CRITICAL|critical",     "text": "CRITICAL", "selected": false }
+        ],
+        "includeAll": false,
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Log Rate (lines/sec)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 16, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service, level) (rate({service=~\"$service\", level=~\"$level\"} [1m]))",
+          "legendFormat": "{{service}} / {{level}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "options": { "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 10,
+      "title": "Error Rate (last 5m)",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 4, "x": 16, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service=~\"nexus.*\", level=~\"ERROR|error|CRITICAL|critical\"} [5m]))",
+          "legendFormat": "Errors"
+        }
+      ],
+      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]},
+          "color": { "mode": "thresholds" }
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Total Logs (last 5m)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service=~\"nexus.*\"} [5m]))",
+          "legendFormat": "Total"
+        }
+      ],
+      "options": { "colorMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 12,
+      "title": "Warnings (last 5m)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 3 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service=~\"nexus.*\", level=~\"WARNING|warning\"} [5m]))",
+          "legendFormat": "Warnings"
+        }
+      ],
+      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 20 }
+          ]},
+          "color": { "mode": "thresholds" }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "All Logs",
+      "type": "logs",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 7 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service=~\"$service\", level=~\"$level\"}",
+          "legendFormat": ""
+        }
+      ],
+      "options": {
+        "showTime": true, "showLabels": true,
+        "showCommonLabels": false, "wrapLogMessage": false,
+        "prettifyLogMessage": false, "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Errors & Criticals",
+      "type": "logs",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 19 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service=~\"nexus.*\", level=~\"ERROR|error|CRITICAL|critical\"}",
+          "legendFormat": ""
+        }
+      ],
+      "options": { "showTime": true, "showLabels": true, "enableLogDetails": true, "sortOrder": "Descending" }
+    },
+    {
+      "id": 4,
+      "title": "Health Monitor Events",
+      "type": "logs",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 19 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service=\"nexus-backend\", logger=\"backend_proxy.health_monitor\"}",
+          "legendFormat": ""
+        }
+      ],
+      "options": { "showTime": true, "showLabels": false, "enableLogDetails": true, "sortOrder": "Descending" }
+    },
+    {
+      "id": 13,
+      "title": "HTTP Requests (from access logs)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 29 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service) (rate({service=~\"nexus.*\"} |~ \"HTTP/1\" [1m]))",
+          "legendFormat": "{{service}} HTTP"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } } }
+    },
+    {
+      "id": 14,
+      "title": "LLM API Calls (httpx to OpenAI)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 29 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate({service=\"nexus-backend\", logger=\"httpx\"} |= \"openai.com\" [1m]))",
+          "legendFormat": "LLM calls/s"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate({service=\"nexus-backend\", logger=\"httpx\"} |= \"openai.com\" |~ \"4[0-9][0-9]|5[0-9][0-9]\" [1m]))",
+          "legendFormat": "LLM errors/s"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } } }
+    },
+    {
+      "id": 15,
+      "title": "Top Loggers by Volume (last 1h)",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 36 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(10, sum by (logger) (count_over_time({service=~\"nexus.*\", logger!=\"\"} [1h])))",
+          "legendFormat": "{{logger}}"
+        }
+      ],
+      "options": { "orientation": "horizontal" },
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 16,
+      "title": "Log Volume by Level (last 1h)",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 36 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (level) (count_over_time({service=~\"nexus.*\"} [1h]))",
+          "legendFormat": "{{level}}"
+        }
+      ],
+      "options": { "legend": { "displayMode": "table", "placement": "right" } }
+    },
+    {
+      "id": 17,
+      "title": "MCP Server Logs",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service=\"nexus-mcp\"}",
+          "legendFormat": ""
+        }
+      ],
+      "options": { "showTime": true, "showLabels": false, "enableLogDetails": true, "sortOrder": "Descending" }
+    },
+    {
+      "id": 18,
+      "title": "Requests with Correlation ID vs Anonymous",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate({service=\"nexus-backend\", correlation_id!=\"\"} [1m]))",
+          "legendFormat": "tracked (has correlation ID)"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate({service=\"nexus-backend\", correlation_id=\"\"} [1m]))",
+          "legendFormat": "anonymous (no correlation ID)"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 10 } } }
+    },
+    {
+      "id": 5,
+      "title": "Error Count by Service (last 1h)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 12, "x": 0, "y": 52 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service) (count_over_time({service=~\"nexus.*\", level=~\"ERROR|error|CRITICAL|critical\"} [1h]))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 10 }
+          ]},
+          "color": { "mode": "thresholds" }
+        }
+      }
+    },
+    {
+      "id": 19,
+      "title": "Health Check Ping Volume",
+      "type": "timeseries",
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 52 },
+      "datasource": { "type": "loki", "uid": "loki-nexus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service) (rate({service=~\"nexus.*\"} |= \"/health/version\" [1m]))",
+          "legendFormat": "{{service}} health pings"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    }
+  ]
+}
