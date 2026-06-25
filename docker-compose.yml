@@ -25,9 +25,8 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     restart: unless-stopped
-    networks:
-      - default
-      - nexus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   grafana:
     image: grafana/grafana:11.0.0
@@ -55,6 +54,3 @@ volumes:
 
 networks:
   default: {}
-  nexus:
-    external: true
-    name: nexus_default
